@@ -1,0 +1,17 @@
+{
+  "name": "export-layer-tags",
+  "displayName": "Export Layer Tags",
+  "description": "Exports layer tags as seperate png files",
+  "version": "0.1",
+  "author": { "name": "Excalith",
+              "url": "https://github.com/excalith/aseprite-extensions" },
+  "contributors": [ ],
+  "publisher": "excalith",
+  "license": "CC-BY-4.0",
+  "categories": [ "Scripts" ],
+  "contributes": {
+    "scripts": [
+        { "path": "./export-layer-tags.lua" }
+    ]
+  }
+}
