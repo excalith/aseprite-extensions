@@ -1,0 +1,17 @@
+{
+  "name": "ase-extension-boilerplate",
+  "displayName": "ASE Extension Boilerplate",
+  "description": "A boilerplate extension that does nothing really",
+  "version": "0.1",
+  "author": { "name": "Excalith",
+              "url": "https://github.com/excalith/aseprite-extensions" },
+  "contributors": [ ],
+  "publisher": "excalith",
+  "license": "CC-BY-4.0",
+  "categories": [ "Scripts" ],
+  "contributes": {
+    "scripts": [
+        { "path": "./ase-extension-boilerplate.lua" }
+    ]
+  }
+}
