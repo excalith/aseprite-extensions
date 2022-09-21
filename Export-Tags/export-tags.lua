@@ -3,11 +3,14 @@ local lastDirectory
 
 -- Hides layer visibilities and returns layer visibility table
 function HideLayers(spr)
-    local layerData = {} -- Save visibility status of each layer here.
+    local layerData = {} -- Save visibility status of each layer
+    local groupData = {} -- Save visibility status of each group
 
     for i, layer in ipairs(spr.layers) do
         -- Recursive for layer groups
-        if layer.isGroup then             
+        if layer.isGroup then
+            groupData[i] = layer.isVisible
+            layer.isVisible = true
             layerData[i] = HideLayers(layer)
         else
             layerData[i] = layer.isVisible
@@ -16,17 +19,18 @@ function HideLayers(spr)
         end
     end
 
-    return layerData
+    return layerData, groupData
 end
 
 -- Restores layer visibilities
-function ShowLayers(sprite, data)
+function ShowLayers(sprite, layerData, groupData)
     for i, layer in ipairs(sprite.layers) do
         if layer.isGroup then
             -- Recursive for layer groups
-            ShowLayers(layer, data[i])
+            layer.isVisible = groupData[i]
+            ShowLayers(layer, layerData[i])
         else
-            layer.isVisible = data[i]
+            layer.isVisible = layerData[i]
         end
     end
 end
@@ -59,7 +63,7 @@ function ExportSpriteSheet(data)
     -- Check directory
     if lastDirectory == "" then
         app.alert("No Directory Selected")
-        data:close()
+        return false
     end
 
     -- Make parent export folder
@@ -71,9 +75,14 @@ function ExportSpriteSheet(data)
     local exportTagList = GetTagList(activeSprite, data.d_tag)
 
     -- If Export Only Selected Layer selected, hide inactive layers
-    local layerData
+    local layerData, groupData
     if data.d_export_layer then
-        layerData = HideLayers(activeSprite)
+        if app.activeLayer.isGroup then
+            app.alert("Selected a group for exporting. This is not allowed.")
+            return false
+        end
+
+        layerData, groupData = HideLayers(activeSprite)
     end
 
     -- Export selected tags
@@ -92,8 +101,10 @@ function ExportSpriteSheet(data)
 
     -- If Export Only Selected Layer selected, restore layer visibilities
     if data.d_export_layer then
-        layerData = ShowLayers(activeSprite, layerData)
+        layerData = ShowLayers(activeSprite, layerData, groupData)
     end
+
+    return true
 end
 
 -- Dialog show function
@@ -120,7 +131,6 @@ function ShowDialog(plugin)
 
     -- Remove spaces from sprite name
     spriteName = string.gsub(activeLayer.name, "%s+", "")
-
 
     -- Get all avilable tags
     tagOptions = {"All Tags"};
@@ -182,8 +192,10 @@ function ShowDialog(plugin)
         id = "d_btn_export",
         text = "&Export",
         onclick = function()
-            ExportSpriteSheet(dlg.data)
-            dlg:close()
+            didExport = ExportSpriteSheet(dlg.data)
+            if didExport then
+                dlg:close()
+            end
         end
     }:button{
         text = "&Cancel"
