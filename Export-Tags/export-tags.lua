@@ -1,22 +1,33 @@
 -- Local Variables
 local active_layer
 local active_sprite
-local file_type_list = {""};
 local strip_options = {"Horizontal", "Vertical"}
 local strip_options_data = {SpriteSheetType.HORIZONTAL, SpriteSheetType.VERTICAL}
+local previous_dir
 
--- Export Function
+-- Updates filesystem selected directory and saves as previous dir
+local function UpdateDir(plugin, data)
+    -- Get parent folder of save data
+    parent_folder = app.fs.filePath(data.dlg_directory)
+
+    -- Save last selected directory to preferences
+    plugin.preferences.lastdir = parent_folder
+    previous_dir = parent_folder
+end
+
+-- Export function
 local function Export(data)
-    -- Check Directory
-    if data.dlg_directory == "" then
+    -- Check directory
+    if previous_dir == "" then
         app.alert("No Directory Selected")
         data:close()
     end
 
-    -- Fix For Directory Extension (no folder selection API yet)
-    local path = data.dlg_directory:gsub("%.", "")
+    -- Make parent export folder
+    exportFolderName = data.dlg_export_folder
+    app.fs.makeDirectory(previous_dir .. "/" .. exportFolderName)
 
-    -- Tag Filter
+    -- Tag filter
     local export_tag_list
     if data.dlg_tag == "All Tags" then
         export_tag_list = active_sprite.tags
@@ -28,12 +39,12 @@ local function Export(data)
         end
     end
 
-    -- Filter Strip Direction
+    -- Filter strip direction
     local strip_direction = data.dlg_strip_direction == "Horizontal" and 1 or 2
 
-    -- Export Tags
+    -- Export selected tags
     for i, tag in ipairs(export_tag_list) do
-        local fileName = path .. '/' .. tag.name
+        local fileName = previous_dir .. '/' .. exportFolderName .. '/' .. tag.name
         app.command.ExportSpriteSheet {
             ui = false,
             type = strip_options_data[strip_direction],
@@ -46,32 +57,33 @@ local function Export(data)
     end
 end
 
--- Main Function
-local function ShowDialogue()
-    -- Check Active Layer
+-- Dialog Show Function
+local function ShowDialog(plugin)
+    -- Check active layer
     active_layer = app.activeLayer
     if not active_layer then
         app.alert("No Active Layer")
         return
     end
 
-    -- Check Active Sprite
+    -- Check active sprite
     active_sprite = app.activeSprite
     if not active_sprite then
         app.alert("No Sprite")
         return
     end
 
+    -- Remove spaces from sprite name
     local sprite_name = string.gsub(active_layer.name, "%s+", "")
 
-    -- Check Tags
+    -- Check if project have tags
     if #active_sprite.tags == 0 then
         app.alert("No Tags to Export")
         return
     end
     local tag_options = {"All Tags"};
 
-    -- Get All Tags
+    -- Get all avilable tags
     for i, tag in ipairs(active_sprite.tags) do
         tag_options[i + 1] = tag.name;
     end
@@ -88,15 +100,23 @@ local function ShowDialogue()
         id = "dlg_strip_direction",
         label = "Strip Direction",
         options = strip_options
+    }:entry{
+        id = "dlg_export_folder",
+        label = "Folder Name",
+        text = sprite_name,
+        focus = true
     }:file{
         id = "dlg_directory",
         label = "Select Directory",
-        title = "Output File",
+        title = "Select Directory",
         open = false,
         save = true,
         filename = sprite_name,
         entry = true,
-        filetypes = file_type_list
+        filetypes = {"folder"},
+        onchange = function()
+            UpdateDir(plugin, dlg.data)
+        end
     }:separator{
         id = "dlg_export_separator",
         text = "Export"
@@ -115,11 +135,22 @@ local function ShowDialogue()
 end
 
 function init(plugin)
+    -- Check if we have previous directory saved
+    if plugin.preferences.lastdir == nil then
+        plugin.preferences.lastdir = ""
+    end
+
+    -- Cache previous directory
+    previous_dir = plugin.preferences.lastdir
+
+    -- Register command
     plugin:newCommand{
         id = "excalith-export-tags",
         title = "Export Tags",
         group = "file_export",
-        onclick = ShowDialogue
+        onclick = function()
+            ShowDialog(plugin)
+        end
     }
 end
 
