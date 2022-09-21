@@ -1,0 +1,26 @@
+{
+  "name": "export-tags",
+  "displayName": "Export Tags",
+  "description": "Exports selected tags as seperate png strips",
+  "version": "0.1",
+  "author": { "name": "Excalith",
+              "url": "https://github.com/excalith/aseprite-extensions" },
+  "contributors": [ ],
+  "publisher": "excalith",
+  "license": "CC-BY-4.0",
+  "categories": [
+    "Scripts",
+    "Keys"
+  ],
+  "contributes": {
+    "scripts": [
+        { "path": "./export-tags.lua" }
+    ],
+    "keys": [
+      {
+        "id": "excalith-export-tags-keys",
+        "path": "./extension-keys.aseprite-keys"
+      }
+    ]
+  }
+}
