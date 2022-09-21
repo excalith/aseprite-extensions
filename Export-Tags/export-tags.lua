@@ -77,7 +77,7 @@ function show_dialog(plugin)
         tagOptions[i + 1] = tag.name;
     end
 
-    dlg = Dialog("Export Layer Tags")
+    dlg = Dialog("Export Tags")
     dlg:separator{
         text = "Settings"
     }:combobox{
