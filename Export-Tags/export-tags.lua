@@ -1,14 +1,69 @@
 -- Local Variables
-local stripOptions = {"Horizontal", "Vertical"}
-local stripOptionsData = {SpriteSheetType.HORIZONTAL, SpriteSheetType.VERTICAL}
 local lastDirectory
 
+-- Hides layer visibilities and returns layer visibility table
+function HideLayers(spr)
+    local layerData = {} -- Save visibility status of each layer
+    local groupData = {} -- Save visibility status of each group
+
+    for i, layer in ipairs(spr.layers) do
+        -- Recursive for layer groups
+        if layer.isGroup then
+            groupData[i] = layer.isVisible
+            layer.isVisible = true
+            layerData[i] = HideLayers(layer)
+        else
+            layerData[i] = layer.isVisible
+            -- Set layer visible if active layer is current iteration
+            layer.isVisible = layer.name == app.activeLayer.name
+        end
+    end
+
+    return layerData, groupData
+end
+
+-- Restores layer visibilities
+function ShowLayers(sprite, layerData, groupData)
+    for i, layer in ipairs(sprite.layers) do
+        if layer.isGroup then
+            -- Recursive for layer groups
+            layer.isVisible = groupData[i]
+            ShowLayers(layer, layerData[i])
+        else
+            layer.isVisible = layerData[i]
+        end
+    end
+end
+
+-- Returns exportable tags
+function GetTagList(sprite, selectedTag)
+    local exportTagList
+    if selectedTag == "All Tags" then
+        exportTagList = activeSprite.tags
+    else
+        for i, tag in ipairs(activeSprite.tags) do
+            if selectedTag == tag.name then
+                exportTagList = {tag}
+            end
+        end
+    end
+
+    return exportTagList
+end
+
+-- Returns strip direction
+function GetStripDirection(stripDir)
+    stripOptionsData = {SpriteSheetType.HORIZONTAL, SpriteSheetType.VERTICAL}
+    stripDirection = stripDir == "Horizontal" and 1 or 2
+    return stripOptionsData[stripDirection]
+end
+
 -- Export function
-function export_tags(data)
+function ExportSpriteSheet(data)
     -- Check directory
     if lastDirectory == "" then
         app.alert("No Directory Selected")
-        data:close()
+        return false
     end
 
     -- Make parent export folder
@@ -17,26 +72,25 @@ function export_tags(data)
 
     -- Tag filter
     activeSprite = app.activeSprite
-    local exportTagList
-    if data.d_tag == "All Tags" then
-        exportTagList = activeSprite.tags
-    else
-        for i, tag in ipairs(activeSprite.tags) do
-            if data.d_tag == tag.name then
-                exportTagList = {tag}
-            end
-        end
-    end
+    local exportTagList = GetTagList(activeSprite, data.d_tag)
 
-    -- Filter strip direction
-    stripDirection = data.d_strip_dir == "Horizontal" and 1 or 2
+    -- If Export Only Selected Layer selected, hide inactive layers
+    local layerData, groupData
+    if data.d_export_layer then
+        if app.activeLayer.isGroup then
+            app.alert("Selected a group for exporting. This is not allowed.")
+            return false
+        end
+
+        layerData, groupData = HideLayers(activeSprite)
+    end
 
     -- Export selected tags
     for i, tag in ipairs(exportTagList) do
         fileName = lastDirectory .. '/' .. exportFolderName .. '/' .. tag.name
         app.command.ExportSpriteSheet {
             ui = false,
-            type = stripOptionsData[stripDirection],
+            type = GetStripDirection(data.d_strip_dir),
             textureFilename = fileName .. '.png',
             tag = tag.name,
             listLayers = false,
@@ -44,17 +98,17 @@ function export_tags(data)
             listSlices = false
         }
     end
+
+    -- If Export Only Selected Layer selected, restore layer visibilities
+    if data.d_export_layer then
+        layerData = ShowLayers(activeSprite, layerData, groupData)
+    end
+
+    return true
 end
 
 -- Dialog show function
-function show_dialog(plugin)
-    -- Check active layer
-    activeLayer = app.activeLayer
-    if not activeLayer then
-        app.alert("No Active Layer")
-        return
-    end
-
+function ShowDialog(plugin)
     -- Check active sprite
     activeSprite = app.activeSprite
     if not activeSprite then
@@ -62,40 +116,54 @@ function show_dialog(plugin)
         return
     end
 
-    -- Remove spaces from sprite name
-    spriteName = string.gsub(activeLayer.name, "%s+", "")
+    -- Check active layer
+    activeLayer = app.activeLayer
+    if not activeLayer then
+        app.alert("No Active Layer")
+        return
+    end
 
     -- Check if project have tags
     if #activeSprite.tags == 0 then
         app.alert("No Tags to Export")
         return
     end
-    tagOptions = {"All Tags"};
+
+    -- Remove spaces from sprite name
+    spriteName = string.gsub(activeLayer.name, "%s+", "")
 
     -- Get all avilable tags
+    tagOptions = {"All Tags"};
     for i, tag in ipairs(activeSprite.tags) do
         tagOptions[i + 1] = tag.name;
     end
 
     dlg = Dialog("Export Tags")
-    dlg:separator{
-        text = "Settings"
-    }:combobox{
+    dlg:combobox{
         id = "d_tag",
         label = "Tags",
         option = plugin.preferences.selectedTag,
         options = tagOptions,
-        onchange = function() 
+        onchange = function()
             plugin.preferences.selectedTag = dlg.data.d_tag
         end
     }:combobox{
         id = "d_strip_dir",
         label = "Strip Direction",
         option = plugin.preferences.stripDirection,
-        options = stripOptions,
-        onchange = function() 
+        options = {"Horizontal", "Vertical"},
+        onchange = function()
             plugin.preferences.stripDirection = dlg.data.d_strip_dir
         end
+    }:check{
+        id = "d_export_layer",
+        label = "Only Selected Layer",
+        selected = plugin.preferences.onlySelectedLayer,
+        onclick = function()
+            plugin.preferences.onlySelectedLayer = dlg.data.d_export_layer
+        end
+    }:separator{
+        text = ""
     }:entry{
         id = "d_export_folder",
         label = "Folder Name",
@@ -119,13 +187,15 @@ function show_dialog(plugin)
             lastDirectory = parentFolder
         end
     }:separator{
-        text = "Export"
+        text = ""
     }:button{
         id = "d_btn_export",
         text = "&Export",
         onclick = function()
-            export_tags(dlg.data)
-            dlg:close()
+            didExport = ExportSpriteSheet(dlg.data)
+            if didExport then
+                dlg:close()
+            end
         end
     }:button{
         text = "&Cancel"
@@ -134,20 +204,26 @@ function show_dialog(plugin)
     }
 end
 
+-- Plugin initialize
 function init(plugin)
-    -- Check if we have previous directory saved
+    -- Check if we have previous directory prefs
     if plugin.preferences.lastdir == nil then
         plugin.preferences.lastdir = ""
     end
 
-    -- Check previous selected tag saved
+    -- Check previous selected tag prefs
     if plugin.preferences.selectedTag == nil then
         plugin.preferences.selectedTag = "All Tags"
     end
 
-    -- Check previous selected strip direction saved
+    -- Check previous selected strip direction prefs
     if plugin.preferences.stripDirection == nil then
         plugin.preferences.stripDirection = "Horizontal"
+    end
+
+    -- Check previous export only selected layer prefs
+    if plugin.preferences.onlySelectedLayer == nil then
+        plugin.preferences.onlySelectedLayer = false
     end
 
     -- Cache previous directory
@@ -159,10 +235,11 @@ function init(plugin)
         title = "Export Tags",
         group = "file_export",
         onclick = function()
-            show_dialog(plugin)
+            ShowDialog(plugin)
         end
     }
 end
 
+-- Plugin exit
 function exit(plugin)
 end
