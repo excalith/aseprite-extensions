@@ -8,10 +8,19 @@
   "contributors": [ ],
   "publisher": "excalith",
   "license": "CC-BY-4.0",
-  "categories": [ "Scripts" ],
+  "categories": [
+    "Scripts",
+    "Keys"
+  ],
   "contributes": {
     "scripts": [
         { "path": "./ase-extension-boilerplate.lua" }
+    ],
+    "keys": [
+      {
+        "id": "excalith-export-tags-keys",
+        "path": "./extension-keys.aseprite-keys"
+      }
     ]
   }
 }

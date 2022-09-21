@@ -1,6 +1,6 @@
 -- reference: https://www.aseprite.org/api/plugin
 function init(plugin)
-    print("Aseprite is initializing my plugin")
+    print("Aseprite is initializing ASE Extension Boilerplate")
 
     -- we can use "plugin.preferences" as a table with fields for
     -- our plugin (these fields are saved between sessions)
@@ -10,9 +10,9 @@ function init(plugin)
 
     -- group reference: https://github.com/aseprite/aseprite/blob/main/data/gui.xml
     plugin:newCommand{
-        id = "ASE_Extension_Boilerplate",
+        id = "ase_extension_boilerplate",
         title = "ASE Extension Boilerplate",
-        group = "cel_popup_properties",
+        group = "file_export",
         onclick = function()
             app.alert("OnClick called")
             plugin.preferences.count = plugin.preferences.count + 1
@@ -25,5 +25,5 @@ function init(plugin)
 end
 
 function exit(plugin)
-    print("Aseprite is closing my plugin, MyFirstCommand was called " .. plugin.preferences.count .. " times")
+    print("Aseprite is closing plugin, command was called " .. plugin.preferences.count .. " times")
 end
