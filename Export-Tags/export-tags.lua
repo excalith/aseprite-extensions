@@ -1,53 +1,42 @@
 -- Local Variables
-local active_layer
-local active_sprite
-local strip_options = {"Horizontal", "Vertical"}
-local strip_options_data = {SpriteSheetType.HORIZONTAL, SpriteSheetType.VERTICAL}
-local previous_dir
-
--- Updates filesystem selected directory and saves as previous dir
-local function UpdateDir(plugin, data)
-    -- Get parent folder of save data
-    parent_folder = app.fs.filePath(data.dlg_directory)
-
-    -- Save last selected directory to preferences
-    plugin.preferences.lastdir = parent_folder
-    previous_dir = parent_folder
-end
+local stripOptions = {"Horizontal", "Vertical"}
+local stripOptionsData = {SpriteSheetType.HORIZONTAL, SpriteSheetType.VERTICAL}
+local lastDirectory
 
 -- Export function
-local function Export(data)
+function export_tags(data)
     -- Check directory
-    if previous_dir == "" then
+    if lastDirectory == "" then
         app.alert("No Directory Selected")
         data:close()
     end
 
     -- Make parent export folder
-    exportFolderName = data.dlg_export_folder
-    app.fs.makeDirectory(previous_dir .. "/" .. exportFolderName)
+    exportFolderName = data.d_export_folder
+    app.fs.makeDirectory(lastDirectory .. "/" .. exportFolderName)
 
     -- Tag filter
-    local export_tag_list
-    if data.dlg_tag == "All Tags" then
-        export_tag_list = active_sprite.tags
+    activeSprite = app.activeSprite
+    local exportTagList
+    if data.d_tag == "All Tags" then
+        exportTagList = activeSprite.tags
     else
-        for i, tag in ipairs(active_sprite.tags) do
-            if data.dlg_tag == tag.name then
-                export_tag_list = {tag}
+        for i, tag in ipairs(activeSprite.tags) do
+            if data.d_tag == tag.name then
+                exportTagList = {tag}
             end
         end
     end
 
     -- Filter strip direction
-    local strip_direction = data.dlg_strip_direction == "Horizontal" and 1 or 2
+    stripDirection = data.d_strip_dir == "Horizontal" and 1 or 2
 
     -- Export selected tags
-    for i, tag in ipairs(export_tag_list) do
-        local fileName = previous_dir .. '/' .. exportFolderName .. '/' .. tag.name
+    for i, tag in ipairs(exportTagList) do
+        fileName = lastDirectory .. '/' .. exportFolderName .. '/' .. tag.name
         app.command.ExportSpriteSheet {
             ui = false,
-            type = strip_options_data[strip_direction],
+            type = stripOptionsData[stripDirection],
             textureFilename = fileName .. '.png',
             tag = tag.name,
             listLayers = false,
@@ -57,74 +46,85 @@ local function Export(data)
     end
 end
 
--- Dialog Show Function
-local function ShowDialog(plugin)
+-- Dialog show function
+function show_dialog(plugin)
     -- Check active layer
-    active_layer = app.activeLayer
-    if not active_layer then
+    activeLayer = app.activeLayer
+    if not activeLayer then
         app.alert("No Active Layer")
         return
     end
 
     -- Check active sprite
-    active_sprite = app.activeSprite
-    if not active_sprite then
+    activeSprite = app.activeSprite
+    if not activeSprite then
         app.alert("No Sprite")
         return
     end
 
     -- Remove spaces from sprite name
-    local sprite_name = string.gsub(active_layer.name, "%s+", "")
+    spriteName = string.gsub(activeLayer.name, "%s+", "")
 
     -- Check if project have tags
-    if #active_sprite.tags == 0 then
+    if #activeSprite.tags == 0 then
         app.alert("No Tags to Export")
         return
     end
-    local tag_options = {"All Tags"};
+    tagOptions = {"All Tags"};
 
     -- Get all avilable tags
-    for i, tag in ipairs(active_sprite.tags) do
-        tag_options[i + 1] = tag.name;
+    for i, tag in ipairs(activeSprite.tags) do
+        tagOptions[i + 1] = tag.name;
     end
 
     dlg = Dialog("Export Layer Tags")
     dlg:separator{
-        id = "dlg_settings_separator",
         text = "Settings"
     }:combobox{
-        id = "dlg_tag",
+        id = "d_tag",
         label = "Tags",
-        options = tag_options
+        option = plugin.preferences.selectedTag,
+        options = tagOptions,
+        onchange = function() 
+            plugin.preferences.selectedTag = dlg.data.d_tag
+        end
     }:combobox{
-        id = "dlg_strip_direction",
+        id = "d_strip_dir",
         label = "Strip Direction",
-        options = strip_options
+        option = plugin.preferences.stripDirection,
+        options = stripOptions,
+        onchange = function() 
+            plugin.preferences.stripDirection = dlg.data.d_strip_dir
+        end
     }:entry{
-        id = "dlg_export_folder",
+        id = "d_export_folder",
         label = "Folder Name",
-        text = sprite_name,
+        text = spriteName,
         focus = true
     }:file{
-        id = "dlg_directory",
-        label = "Select Directory",
-        title = "Select Directory",
+        id = "d_directory",
+        label = "Project Directory",
+        title = "Select A Project Directory",
         open = false,
         save = true,
-        filename = sprite_name,
+        filename = spriteName,
         entry = true,
-        filetypes = {"folder"},
+        filetypes = {},
         onchange = function()
-            UpdateDir(plugin, dlg.data)
+            -- Get parent folder of save data
+            parentFolder = app.fs.filePath(dlg.data.d_directory)
+
+            -- Save last selected directory to preferences
+            plugin.preferences.lastdir = parentFolder
+            lastDirectory = parentFolder
         end
     }:separator{
-        id = "dlg_export_separator",
         text = "Export"
     }:button{
-        id = "dlg_ok",
+        id = "d_btn_export",
         text = "&Export",
         onclick = function()
-            Export(dlg.data)
+            export_tags(dlg.data)
             dlg:close()
         end
     }:button{
@@ -140,8 +140,18 @@ function init(plugin)
         plugin.preferences.lastdir = ""
     end
 
+    -- Check previous selected tag saved
+    if plugin.preferences.selectedTag == nil then
+        plugin.preferences.selectedTag = "All Tags"
+    end
+
+    -- Check previous selected strip direction saved
+    if plugin.preferences.stripDirection == nil then
+        plugin.preferences.stripDirection = "Horizontal"
+    end
+
     -- Cache previous directory
-    previous_dir = plugin.preferences.lastdir
+    lastDirectory = plugin.preferences.lastdir
 
     -- Register command
     plugin:newCommand{
@@ -149,7 +159,7 @@ function init(plugin)
         title = "Export Tags",
         group = "file_export",
         onclick = function()
-            ShowDialog(plugin)
+            show_dialog(plugin)
         end
     }
 end
