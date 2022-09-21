@@ -1,4 +1,3 @@
-function init(plugin)
     local status = {"Default", "Complete", "In-Progress", "Not Started"}
     local colors = {Color {
         r = 0,
@@ -48,28 +47,32 @@ function init(plugin)
     end
 
     local function ShowDialogue()
-        dlg = Dialog("Layer Flag")
+        dlg = Dialog("Layer Status")
         dlg:combobox{
             id = "dlg_status",
             label = "Status",
             options = status
-        }:button{
+        }
+        :newrow()
+        :button{
             id = "dlg_ok",
             text = "&Apply",
             onclick = function()
                 ChangeLayerColor(dlg.data)
             end
-        }:button{
+        }
+        :button{
             text = "&Close"
         }:show{
             wait = false
         }
     end
 
+function init(plugin)
     plugin:newCommand{
-        id = "Status",
+        id = "excalith-layer-status",
         title = "Set Layer Status",
-        group = "layer_popup_properties",
+        group = "layer_properties",
         onclick = ShowDialogue
     }
 end

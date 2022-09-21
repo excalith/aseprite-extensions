@@ -6,7 +6,7 @@ Useful Aseprite extensions I wrote to maximize productivity
 | -------------------------------------------------------- | -------------------------------------------------------------------- |
 | [ASE Extension Boilerplate](/ASE-Extension-Boilerplate/) | Used for creating new extensions, just a boilerplate                 |
 | [Export Layer Tags](/Export-Layer-Tags/)                 | Exports selected layer tags as seperate spritesheets                 |
-| [Layer Flags](/Layer-Flags/)                             | Flags layers with status colors for `Complete`, `WIP`, `Not Started` |
+| [Layer Status](/Layer-Status/)                             | Flags layers with status colors for `Complete`, `WIP`, `Not Started` |
 
 ## Installation
 ### Manual

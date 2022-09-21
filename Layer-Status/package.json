@@ -1,6 +1,6 @@
 {
-  "name": "layer-flags",
-  "displayName": "Layer Flags",
+  "name": "layer-status",
+  "displayName": "Layer Status",
   "description": "Flags layers with status colors for Complete, WIP, Not Started.",
   "version": "0.1",
   "author": { "name": "Excalith",
@@ -8,10 +8,19 @@
   "contributors": [ ],
   "publisher": "excalith",
   "license": "CC-BY-4.0",
-  "categories": [ "Scripts" ],
+  "categories": [
+    "Scripts",
+    "Keys"
+  ],
   "contributes": {
     "scripts": [
-        { "path": "./layer-flags.lua" }
+        { "path": "./layer-status.lua" }
+    ],
+    "keys": [
+      {
+        "id": "excalith-layer-status-keys",
+        "path": "./extension-keys.aseprite-keys"
+      }
     ]
   }
 }
