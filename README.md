@@ -2,11 +2,11 @@
 Useful Aseprite extensions I wrote to maximize productivity
 
 ## Extensions
-| Extension                                                | Description                                                          |
-| -------------------------------------------------------- | -------------------------------------------------------------------- |
-| [ASE Extension Boilerplate](/ASE-Extension-Boilerplate/) | Used for creating new extensions, just a boilerplate                 |
-| [Export Tags](/Export-Tags/)                             | Exports selected tags as seperate png strips                         |
-| [Layer Status](/Layer-Status/)                           | Flags layers with status colors for `Complete`, `WIP`, `Not Started` |
+| Extension                                                | Description                                                                                      |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [ASE Extension Boilerplate](/ASE-Extension-Boilerplate/) | Used for creating new extensions, just a boilerplate                                             |
+| [Export Tags](/Export-Tags/)                             | Exports selected tags as seperate png strips. (`File > Export Tags`)                             |
+| [Layer Status](/Layer-Status/)                           | Flags layers with colors for complete, wip and not started statuses (`Layer > Set Layer Status`) |
 
 ## Installation
 ### Manual
