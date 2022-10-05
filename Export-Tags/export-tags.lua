@@ -76,7 +76,7 @@ function ExportSpriteSheet(data)
 
     -- If Export Only Selected Layer selected, hide inactive layers
     local layerData, groupData
-    if data.d_export_layer then
+    if data.d_export_layer_mode == "Selected Layer" then
         if app.activeLayer.isGroup then
             app.alert("Selected a group for exporting. This is not allowed.")
             return false
@@ -100,7 +100,7 @@ function ExportSpriteSheet(data)
     end
 
     -- If Export Only Selected Layer selected, restore layer visibilities
-    if data.d_export_layer then
+    if data.d_export_layer_mode == "Selected Layer" then
         layerData = ShowLayers(activeSprite, layerData, groupData)
     end
 
@@ -141,7 +141,7 @@ function ShowDialog(plugin)
     dlg = Dialog("Export Tags")
     dlg:combobox{
         id = "d_tag",
-        label = "Tags",
+        label = "Tags To Export",
         option = plugin.preferences.selectedTag,
         options = tagOptions,
         onchange = function()
@@ -155,12 +155,13 @@ function ShowDialog(plugin)
         onchange = function()
             plugin.preferences.stripDirection = dlg.data.d_strip_dir
         end
-    }:check{
-        id = "d_export_layer",
-        label = "Only Selected Layer",
-        selected = plugin.preferences.onlySelectedLayer,
-        onclick = function()
-            plugin.preferences.onlySelectedLayer = dlg.data.d_export_layer
+    }:combobox{
+        id = "d_export_layer_mode",
+        label = "Export Mode",
+        option = plugin.preferences.exportLayerMode,
+        options = {"All Visible Layers", "Selected Layer"},
+        onchange = function()
+            plugin.preferences.exportLayerMode = dlg.data.d_export_layer_mode
         end
     }:separator{
         text = ""
@@ -221,9 +222,9 @@ function init(plugin)
         plugin.preferences.stripDirection = "Horizontal"
     end
 
-    -- Check previous export only selected layer prefs
-    if plugin.preferences.onlySelectedLayer == nil then
-        plugin.preferences.onlySelectedLayer = false
+    -- Check previous selected strip direction prefs
+    if plugin.preferences.exportLayerMode == nil then
+        plugin.preferences.exportLayerMode = "All Visible Layers"
     end
 
     -- Cache previous directory
