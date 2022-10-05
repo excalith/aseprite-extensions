@@ -2,7 +2,7 @@
   "name": "export-tags",
   "displayName": "Export Tags",
   "description": "Exports selected tags as seperate png strips",
-  "version": "0.1",
+  "version": "0.2",
   "author": { "name": "Excalith",
               "url": "https://github.com/excalith/aseprite-extensions" },
   "contributors": [ ],
